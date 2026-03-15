@@ -1,0 +1,22 @@
+# Local workspace directories
+# These are not committed — projects live in their own repositories
+projects/
+experiments/
+datasets/
+models/
+tools/
+shared/
+templates/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local overrides
+*.local
