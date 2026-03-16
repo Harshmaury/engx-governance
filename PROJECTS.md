@@ -1,52 +1,27 @@
-# Platform Projects
-# @version: 2.1.0
-# @updated: 2026-03-15
+# PROJECTS.md
+# @version: 3.0.0
+# @updated: 2026-03-16
 
-Complete registry of all developer platform repositories.
-
----
-
-## Core Platform Triangle
-
-| Project | Domain    | Purpose                              | Port  | Repository                            | Status |
-|---------|-----------|--------------------------------------|-------|---------------------------------------|--------|
-| Nexus   | Control   | System coordination, service runtime | 8080  | https://github.com/Harshmaury/Nexus   | ✅ Phases 1–14 complete |
-| Atlas   | Knowledge | Workspace awareness, source indexing | 8081  | https://github.com/Harshmaury/Atlas   | ✅ Phase 2 complete (v0.2.0) |
-| Forge   | Execution | Intent execution, workflow engine    | 8082  | https://github.com/Harshmaury/Forge   | ⏳ Phase 1 ready to start |
+Platform project registry. One entry per service. No commands here — see RUNBOOK.md.
 
 ---
 
-## Governance
+## Core Platform
 
-| Repository         | Purpose                                      |
-|--------------------|----------------------------------------------|
-| developer-platform | Platform architecture, ADRs, design rules    |
+| Project | Domain    | Port | Tag                    | Status                     |
+|---------|-----------|------|------------------------|----------------------------|
+| Nexus   | Control   | 8080 | v1.0.0-fixes-complete  | Feature-complete           |
+| Atlas   | Knowledge | 8081 | v0.3.0-fixes-complete  | Phase 1+2 complete         |
+| Forge   | Execution | 8082 | v0.4.0-fixes-complete  | Phase 1+2+3 complete       |
 
-https://github.com/Harshmaury/developer-platform
+## Paths and Repos
 
----
-
-## Local Workspace Paths
-
-```
-~/workspace/projects/apps/nexus/
-~/workspace/projects/apps/atlas/
-~/workspace/projects/apps/forge/
-```
-
----
-
-## Ports
-
-```
-Nexus   127.0.0.1:8080   NEXUS_HTTP_ADDR
-Atlas   127.0.0.1:8081   ATLAS_HTTP_ADDR
-Forge   127.0.0.1:8082   FORGE_HTTP_ADDR
-```
-
-Override any port via environment variable before starting the service.
-
----
+| Project | Path                            | Repository                            |
+|---------|---------------------------------|---------------------------------------|
+| Nexus   | ~/workspace/projects/apps/nexus | github.com/Harshmaury/Nexus           |
+| Atlas   | ~/workspace/projects/apps/atlas | github.com/Harshmaury/Atlas           |
+| Forge   | ~/workspace/projects/apps/forge | github.com/Harshmaury/Forge           |
+| Platform governance | ~/workspace/developer-platform | github.com/Harshmaury/developer-platform |
 
 ## Binaries
 
@@ -54,58 +29,23 @@ Override any port via environment variable before starting the service.
 ~/bin/engxd    Nexus daemon
 ~/bin/engx     Nexus CLI
 ~/bin/engxa    Nexus remote agent
-~/bin/atlas    Atlas knowledge service    ✅ Phase 2 complete
-~/bin/forge    Forge execution engine     ⏳ Phase 1 not yet built
+~/bin/atlas    Atlas knowledge service
+~/bin/forge    Forge execution engine
 ```
-
----
 
 ## Phase Dependency Chain
 
 ```
-Nexus Phases 1–14 ✅  →  Atlas Phase 1 ✅  →  Atlas Phase 2 ✅  →  Forge Phase 1  →  Forge Phase 2  →  Forge Phase 3
+Nexus 1–14 ✅ → Atlas Phase 1 ✅ → Atlas Phase 2 ✅ → Forge Phase 1 ✅ → Forge Phase 2 ✅ → Forge Phase 3 ✅
 ```
 
-Forge Phase 1 requires Atlas Phase 1 running (context enrichment via Atlas HTTP API).
-
----
-
-## Atlas API Reference (for Forge client)
-
-```
-Phase 1:
-  GET  /health
-  GET  /workspace
-  GET  /workspace/projects
-  GET  /workspace/project/:id
-  GET  /workspace/search?q=
-  GET  /workspace/context
-
-Phase 2:
-  GET  /workspace/capabilities
-  GET  /workspace/conflicts
-  GET  /workspace/graph
-```
-
----
-
-## Tags
-
-```
-Nexus   v0.14-stable           Phases 1–14
-Atlas   v0.2.0-phase2-complete Phase 2 — capability model + graph + conflict detection
-```
-
----
+Next: Atlas Phase 3 (ADR required) or Forge Phase 4 (ADR required).
 
 ## Adding a New Project
 
-Before creating a new repository:
-
-1. Identify which capability domain it belongs to.
-2. Confirm it does not duplicate an existing capability.
-3. Create an ADR in `architecture/decisions/`.
-4. Add it to this registry.
-5. Create the repository following the project scaffold pattern.
-
-Capability boundaries: `architecture/platform-capability-boundaries.md`
+1. Identify capability domain (Control / Knowledge / Execution)
+2. Confirm no duplication — check `architecture/platform-capability-boundaries.md`
+3. Write ADR in `architecture/decisions/`
+4. Assign next sequential port (next available: 8083)
+5. Add entry to this file and to `AI_CONTEXT.md`
+6. Generate service token and add to `~/.nexus/service-tokens`

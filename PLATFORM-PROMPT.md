@@ -1,6 +1,7 @@
 # PLATFORM-PROMPT.md
 # Single-prompt AI onboarding for the developer platform
 # Paste this at the start of any session involving this platform
+# @updated: 2026-03-16
 
 ---
 
@@ -8,58 +9,54 @@ You are assisting Harsh Maury with a local developer platform built in Go on Ubu
 
 ## Platform Structure
 
-Three capability domains. Three repos. One governance repo.
+| Role       | Project | Port | Path                              | Repo                                     |
+|------------|---------|------|-----------------------------------|------------------------------------------|
+| Control    | Nexus   | 8080 | ~/workspace/projects/apps/nexus   | github.com/Harshmaury/Nexus              |
+| Knowledge  | Atlas   | 8081 | ~/workspace/projects/apps/atlas   | github.com/Harshmaury/Atlas              |
+| Execution  | Forge   | 8082 | ~/workspace/projects/apps/forge   | github.com/Harshmaury/Forge              |
+| Governance | —       | —    | ~/workspace/developer-platform    | github.com/Harshmaury/developer-platform |
 
-| Role       | Project | Repo                              | Port  | Path                              |
-|------------|---------|-----------------------------------|-------|-----------------------------------|
-| Control    | Nexus   | github.com/Harshmaury/Nexus       | 8080  | ~/workspace/projects/apps/nexus   |
-| Knowledge  | Atlas   | github.com/Harshmaury/Atlas       | 8081  | ~/workspace/projects/apps/atlas   |
-| Execution  | Forge   | github.com/Harshmaury/Forge       | 8082  | ~/workspace/projects/apps/forge   |
-| Governance | —       | github.com/Harshmaury/developer-platform | — | ~/workspace/developer-platform |
+## Status (2026-03-16)
 
-## Navigation — Read These First
+| Service | Phase | Tag                    |
+|---------|-------|------------------------|
+| Nexus   | 1–14 complete + ADR-002 + ADR-008 | v1.0.0-fixes-complete |
+| Atlas   | Phase 1+2 complete + ADR-008      | v0.3.0-fixes-complete |
+| Forge   | Phase 1+2+3 complete + ADR-008    | v0.4.0-fixes-complete |
 
-Before writing any code, fetch:
+## Read These Before Writing Code
 
-1. `~/workspace/developer-platform/AI_CONTEXT.md` — platform rules, current state
+1. `~/workspace/developer-platform/AI_CONTEXT.md` — platform rules, open gaps
 2. `~/workspace/developer-platform/architecture/platform-capability-boundaries.md` — who owns what
-3. The relevant project's `WORKFLOW-SESSION.md` — build status, delivery pattern
+3. The relevant project's `WORKFLOW-SESSION.md` — build status, what was last changed
 
-Session key prefixes: Nexus=`NX-` Atlas=`AT-` Forge=`FG-`
+Session key prefixes: `NX-` (Nexus) `AT-` (Atlas) `FG-` (Forge)
 
-## Delivery Pattern (mandatory)
+## Delivery Pattern
 
-```
-zip naming:   <project>-<phase>-<what>-<YYYYMMDD>-<HHMM>.zip
-drop folders: /mnt/c/Users/harsh/Downloads/nexus-drop/
-                                            atlas-drop/
-                                            forge-drop/
+Drop folder (all projects): `/mnt/c/Users/harsh/Downloads/engx-drop/`
 
-apply command:
-  cd ~/workspace/projects/apps/<project> && \
-  unzip -o /mnt/c/Users/harsh/Downloads/<project>-drop/<ZIP>.zip -d . && \
-  go build ./... && \
-  git add <files> WORKFLOW-SESSION.md && \
-  git commit -m "<type>: <description>" && \
-  git push origin <branch>
+```bash
+cd ~/workspace/projects/apps/<project> && \
+unzip -o /mnt/c/Users/harsh/Downloads/engx-drop/<ZIP>.zip -d . && \
+go build ./... && \
+git add <files> WORKFLOW-SESSION.md && \
+git commit -m "<type>: <description>" && \
+git push origin main
 ```
 
-`go build ./...` must pass before `git add`. WORKFLOW-SESSION.md always in commit.
+Rules: `go build ./...` passes before `git add`. WORKFLOW-SESSION.md in every commit.
+Grep all import usages before adding or removing any import.
 
-## Four Hard Rules
+## Six Hard Rules
 
-1. **Nexus owns**: project registry, event bus topics, filesystem watcher, service state. Nothing moves out.
-2. **Topic constants**: declared only in `Nexus/internal/eventbus/bus.go`. All services import, never redefine.
-3. **No cross-imports**: services talk HTTP/JSON only. Atlas/Forge never import Nexus internals (except eventbus constants).
-4. **ADR first**: new capability → ADR in `~/workspace/developer-platform/architecture/decisions/` → then code.
+1. **Nexus owns permanently**: project registry (ADR-001), filesystem observation (ADR-002), service runtime state.
+2. **Topic constants**: declared in `Nexus/internal/eventbus/bus.go`, re-exported via `pkg/events`. Import `pkg/events` — never `internal/eventbus` from outside Nexus. Never redefine locally.
+3. **No cross-imports**: services communicate via HTTP/JSON only. Atlas and Forge never import Nexus internal packages except `pkg/events`.
+4. **ADR first**: new capability → ADR committed to `developer-platform/architecture/decisions/` → then code.
+5. **Auth**: all inter-service calls carry `X-Service-Token` header (ADR-008). `/health` is always exempt.
+6. **Migrations**: all schema migrations in one ordered slice in `db.go`. Never in `init()` functions.
 
-## Current State (2026-03-15)
+## Commands
 
-- Nexus: complete, all 14 phases on main
-- Atlas: scaffold only, Phase 1 not started
-- Forge: scaffold only, Phase 1 not started
-- Next: Nexus ADR-002 impl (workspace event topics) → Atlas Phase 1
-
-## Before Writing Any Code
-
-State your understanding in 2 lines. List every file to create or modify. Wait for approval.
+All platform commands are in `~/workspace/developer-platform/RUNBOOK.md`.
