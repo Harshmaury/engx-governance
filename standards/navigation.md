@@ -409,3 +409,108 @@ ZIPs:    <zip files>
 Commit:  <before> → <after> (project)
 ```
 Session key prefixes: `NX-` | `AT-` | `FG-` | `MT-` | `NV-` | `GD-` | `OB-` | `ST-` | `ZP-` | `PL-`
+
+---
+
+## Troubleshooting Index
+
+Symptom → file to check → relevant ADR.
+
+### Platform startup
+| Symptom | File | ADR |
+|---------|------|-----|
+| Port already in use | `fuser 808X/tcp` then `kill -9` | — |
+| Binary not found after `go install` | `cp ~/go/bin/<svc> ~/bin/<svc>` | — |
+| Service token warning on start | Set `<SVC>_SERVICE_TOKEN` env var | ADR-008 |
+| Atlas not connecting to Nexus | Check `engxd &` is running first | ADR-001 |
+
+### Events and streaming
+| Symptom | File | ADR |
+|---------|------|-----|
+| `/events/stream` returns 500 | `nexus/internal/api/middleware/logging.go` — Flusher missing | ADR-015 |
+| SSE connected but no events | No service lifecycle events yet — add `services:` to nexus.yaml | ADR-015 |
+| `trace_id` empty on events | Events emitted before Phase 15 migration — run ALTER TABLE manually | ADR-010 |
+| Observer traces always empty | No `services:` block in any nexus.yaml → no lifecycle events | ADR-014 |
+
+### Atlas / graph
+| Symptom | File | ADR |
+|---------|------|-----|
+| Project shows `unverified` | `atlas/internal/validator/nexus_yaml.go` — fix nexus.yaml | ADR-009 |
+| Atlas not seeing new project | `engx register <path>` then wait for 3s poll | ADR-002 |
+| Empty ID row in atlas.db | `sqlite3 ~/.nexus/atlas.db "DELETE FROM projects WHERE id=''"` | — |
+| `/graph/services` returns empty | No verified projects — all need valid nexus.yaml | ADR-009 |
+
+### Forge / execution
+| Symptom | File | ADR |
+|---------|------|-----|
+| Preflight denied — project not found | Project not verified in Atlas — add nexus.yaml | ADR-010 |
+| Preflight denied — Atlas unreachable | Fail-open: `forge/internal/preflight/checker.go` | ADR-010 |
+| Command rejected at validator | `forge/internal/command/validator.go` — check intent name | ADR-004 |
+| History endpoint returns null | No commands executed yet — correct behaviour | ADR-010 |
+
+### Guardian findings
+| Symptom | File | ADR |
+|---------|------|-----|
+| G-005 for your project | Add `nexus.yaml` with valid `id`, `type`, `language`, `version` | ADR-009 |
+| G-001 repeated denials | Project missing from Atlas verified graph | ADR-010 |
+| G-003 high failure rate | Check `forge/internal/executor/intent/` for the failing intent | ADR-013 |
+| Guardian shows empty `""` target | Stale Atlas row — delete it from atlas.db | ADR-013 |
+
+### Sentinel insights
+| Symptom | File | ADR |
+|---------|------|-----|
+| `health: healthy` always | No service crashes/deploys yet — correct at rest | ADR-017 |
+| `ai_available: false` | `GEMINI_API_KEY` not set — start sentinel with the key | ADR-017 |
+| `/insights/explain` 404 | Old binary running — `cp ~/go/bin/sentinel ~/bin/sentinel` | ADR-017 |
+| Deploy correlation not firing | No `deploy` intent in Forge history yet | ADR-017 |
+
+### zp packaging
+| Symptom | File | ADR |
+|---------|------|-----|
+| Project not found | `zp list` — check if nexus.yaml exists in project root | ADR-019 |
+| ZIP lands in wrong dir | `echo $ZP_DROP_DIR` — set to `/mnt/c/Users/harsh/Downloads/engx-drop` | ADR-019 |
+| `_backups/` in ZIP | Upgrade to zp v2.0.0 | ADR-019 |
+| `go.mod` missing from ZIP | Upgrade to zp v2.0.0 (always included now) | ADR-019 |
+| developer-platform not packageable | `zp --path ~/workspace/developer-platform` | ADR-019 |
+
+### Database
+| Symptom | Fix |
+|---------|-----|
+| Migration not applied | Schema uses `schema_migrations` table — check `SELECT * FROM schema_migrations` |
+| `column does not exist` | Run migration manually: `ALTER TABLE <t> ADD COLUMN <c> TEXT NOT NULL DEFAULT ''` |
+| Nexus DB path | `~/.nexus/nexus.db` |
+| Atlas DB path | `~/.nexus/atlas.db` |
+| Forge DB path | `~/.nexus/forge.db` |
+
+---
+
+## Session Startup Checklist
+
+Run this at the start of every dev session:
+
+```bash
+# 1. Start platform
+engxd &
+sleep 2
+ATLAS_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e atlas &
+FORGE_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e forge &
+METRICS_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e metrics &
+NAVIGATOR_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e navigator &
+GUARDIAN_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e guardian &
+OBSERVER_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e observer &
+SENTINEL_SERVICE_TOKEN=7d5fcbe4-44b9-4a8f-8b79-f80925c1330e \
+GEMINI_API_KEY=<your-key> sentinel &
+
+# 2. Verify all healthy
+for port in 8080 8081 8082 8083 8084 8085 8086 8087; do
+  status=$(curl -s http://127.0.0.1:$port/health | grep -o '"ok":true' || echo "DOWN")
+  printf "  :%d  %s\n" $port "$status"
+done
+
+# 3. Check platform state
+curl -s http://127.0.0.1:8087/insights/system | jq '.data | {health, summary}'
+curl -s http://127.0.0.1:8085/guardian/findings | jq '.data.summary'
+
+# 4. Check worklog
+tail -n 20 ~/workspace/WORKLOG.md
+```
