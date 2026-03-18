@@ -132,3 +132,42 @@ intent. The platform handles coordination.
 The system supports continuous evolution. New projects, new languages,
 new tools, and new workflows are added without architectural redesign.
 The capability domains are stable. The implementations within them evolve.
+
+---
+
+## Platform Authority Model
+
+Every action on the platform flows through a defined authority chain.
+This hierarchy is mandatory and cannot be bypassed by any automated system.
+
+```
+Sentinel  → suggests   AI prose narrative, on explicit request only
+Guardian  → flags      Deterministic findings, read-only, non-blocking
+Developer → decides    Human always in the loop — cannot be automated away
+Forge     → executes   On developer intent or validated automated trigger
+Nexus     → controls   Sole authority for service start/stop
+```
+
+**Sentinel** produces human-readable reasoning about platform state when
+the developer explicitly requests it via `GET /insights/explain`. It never
+suggests control actions and is never called on background polling cycles.
+
+**Guardian** evaluates deterministic policy rules and produces findings.
+Findings are audit outputs only. Guardian has no execution authority —
+it cannot block, trigger, or modify any platform action.
+
+**Developer** is the mandatory decision node. No automated system may
+bypass the developer to trigger execution. Automation (Forge triggers,
+workflow automation) acts on pre-approved patterns defined by the developer
+— it does not make novel decisions autonomously.
+
+**Forge** executes on developer intent or on automation patterns the
+developer has explicitly configured. It never acts without either a direct
+command or a registered trigger.
+
+**Nexus** is the sole authority for service lifecycle. Only Nexus may
+start or stop a service. Forge instructs Nexus via
+`POST /projects/:id/start|stop` — no other service has this authority.
+
+The Developer node in this hierarchy is permanent. It is not an
+implementation detail that can be optimised away as the platform matures.
