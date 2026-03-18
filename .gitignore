@@ -1,23 +1,14 @@
-# Local workspace directories
-# These are not committed — projects live in their own repositories
-projects/
-experiments/
-datasets/
-models/
-tools/
-shared/
-templates/
+# Nexus runtime state — generated locally, never committed
+.nexus.yaml
+
+# zp local packaging config
+.zpignore
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Editor
-.vscode/
+# IDE
 .idea/
+.vscode/
 *.swp
-*.swo
-
-# Local overrides
-*.local
-CONTEXT.md
