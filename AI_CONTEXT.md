@@ -19,6 +19,8 @@ Execution  Forge   :8082   acts on the workspace — build, test, run, deploy
 Observer   5 svcs  :8083–:8087   read-only — never call write endpoints
 Library    Canon   —       shared types — ServiceTokenHeader, TraceIDHeader, defaults
 Tool       ZP      v2.0.0  packaging — builds ZIPs from nexus.yaml
+Contract   Accord  —       shared types — API DTOs, ErrorCode, Response[T]
+Client     Herald  —       typed HTTP client — all engxd API calls go through here
 ```
 
 This repository governs the platform. It contains no implementation code.
@@ -39,6 +41,8 @@ This repository governs the platform. It contains no implementation code.
 | Sentinel  | v0.3.0-phase3    | 1–3      | recovery log persist, AI on-demand     |
 | Canon     | v0.3.0           | —        | identity constants, default addrs      |
 | ZP        | v2.0.0           | —        | packaging tool, workspace registry scan |
+| Accord    | v0.1.0           | —        | shared API types, error codes, Response[T] |
+| Herald    | v0.1.0           | —        | typed Nexus HTTP client, retry/backoff |
 
 **All repos on `main` branch.**
 **Tags:** v0.1.0-platform-working → v0.2.0-adr023-startup-grace → v0.3.0-cross-service-commands → v0.6.0-wave4
