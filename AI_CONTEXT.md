@@ -4,7 +4,7 @@ Context document for AI systems working within this developer platform.
 Read this file at the start of any session involving platform architecture,
 new service design, code changes, or cross-project integration work.
 
-**Updated:** 2026-03-19 | **Tag:** v0.3.0-cross-service-commands
+**Updated:** 2026-03-20 | **Tag:** v0.6.0-wave4
 
 ---
 
@@ -18,35 +18,37 @@ Knowledge  Atlas   :8081   understands the workspace — capability graph, verif
 Execution  Forge   :8082   acts on the workspace — build, test, run, deploy
 Observer   5 svcs  :8083–:8087   read-only — never call write endpoints
 Library    Canon   —       shared types — ServiceTokenHeader, TraceIDHeader, defaults
-Tool       ZP      —       packaging — builds ZIPs from nexus.yaml
+Tool       ZP      v2.0.0  packaging — builds ZIPs from nexus.yaml
 ```
 
 This repository governs the platform. It contains no implementation code.
 
 ---
 
-## 2. Current Platform State (2026-03-19)
+## 2. Current Platform State (2026-03-20)
 
 | Service   | Version          | Phase    | Key State                              |
 |-----------|------------------|----------|----------------------------------------|
-| Nexus     | v1.2.0-phase16   | 1–16     | ADR-022 service register, ADR-023 reset |
+| Nexus     | v1.6.6           | 1–20     | Wave 4: goreleaser, install script, upgrade cmd |
 | Atlas     | v0.5.0-phase3    | 1–3      | nexus.yaml contract, verified graph    |
-| Forge     | v0.5.0-phase4    | 1–4      | PreflightSnapshot, execution history   |
-| Metrics   | v0.1.0-phase1    | 1        | Canon headers, event limit 500         |
+| Forge     | v0.5.0-phase5    | 1–5      | scheduled cron triggers, preflight snapshot |
+| Metrics   | v0.2.0-phase2    | 1–2      | Prometheus, Canon headers              |
 | Navigator | v0.1.0-phase1    | 1        | Canon headers, trace propagation       |
 | Guardian  | v0.1.0-phase1    | 1        | Canon headers, 5 policy rules          |
 | Observer  | v0.1.0-phase1    | 1        | Canon v0.3.0, trace assembler          |
-| Sentinel  | v0.2.0-phase2    | 1–2      | AI on-demand, lastEventID mutex        |
+| Sentinel  | v0.3.0-phase3    | 1–3      | recovery log persist, AI on-demand     |
 | Canon     | v0.3.0           | —        | identity constants, default addrs      |
-| ZP        | v2.0.0           | —        | packaging tool                         |
+| ZP        | v2.0.0           | —        | packaging tool, workspace registry scan |
 
-**All repos on `main` branch. Tags:** v0.1.0-platform-working → v0.2.0-adr023-startup-grace → v0.3.0-cross-service-commands
+**All repos on `main` branch.**
+**Tags:** v0.1.0-platform-working → v0.2.0-adr023-startup-grace → v0.3.0-cross-service-commands → v0.6.0-wave4
 
-**Compiled binaries:** `/tmp/bin/` — engxd, engx, engxa, atlas, forge, metrics, navigator, guardian, observer, sentinel
+**Compiled binaries:** `~/bin/` — engxd, engx, engxa (Wave 4: installed via goreleaser pipeline)
+**Service binaries:** `/tmp/bin/` — atlas, forge, metrics, navigator, guardian, observer, sentinel
 
 ---
 
-## 3. Twelve Rules — Never Violate
+## 3. Thirteen Rules — Never Violate
 
 | # | Rule | ADR |
 |---|------|-----|
@@ -62,6 +64,7 @@ This repository governs the platform. It contains no implementation code.
 | 10 | Capability duplication is a design failure — check capability matrix before building | Cap boundaries |
 | 11 | `engx register` auto-registers project + service from `.nexus.yaml` runtime section | ADR-022 |
 | 12 | `engx platform start` resets fail counts before queuing — never start without reset | ADR-023 |
+| 13 | `engx platform start` requires services to be registered — use `--register` on first boot | ADR-032 |
 
 ---
 
@@ -118,28 +121,66 @@ Canon is in `go.mod` for all 8 service repos. Never hardcode header strings.
 | ADR-021 | PreflightSnapshot in Execution History | ✅ Accepted |
 | ADR-022 | Service Registration API | ✅ Accepted |
 | ADR-023 | Platform Startup Grace (Reset) | ✅ Accepted |
-| ADR-024 | engx init — Project Onboarding | 🔜 Next |
+| ADR-024 | engx init — Project Onboarding | ✅ Accepted |
+| ADR-025 | engx init — nexus.yaml Generation | ✅ Accepted |
+| ADR-026 | engxd System Service Install | ✅ Accepted |
+| ADR-027 | Forge Scheduled Cron Triggers | ✅ Accepted |
+| ADR-028 | engx Self-Upgrade Protocol | ✅ Accepted |
+| ADR-029 | Doctor Extended Checks | ✅ Accepted |
+| ADR-030 | goreleaser Release Pipeline | ✅ Accepted |
+| ADR-031 | scripts/install.sh Zero-to-Running | ✅ Accepted |
+| ADR-032 | platform start Must Persist desired=running | ✅ Accepted |
 
 ---
 
 ## 7. Architecture Files
 
 ```
-developer-platform/
+engx-governance/
   standards/documentation.md            documentation system
   definitions/glossary.md               canonical term definitions
-  architecture/decisions/               ADR-001 through ADR-023
+  architecture/decisions/               ADR-001 through ADR-032
   architecture/platform-capability-boundaries.md
   architecture/architecture-evolution-rules.md
 ```
 
-Service repos: each contains `SERVICE-CONTRACT.md`, `nexus.yaml`, `.gitignore`
+Service repos: each contains `SERVICE-CONTRACT.md`, `nexus.yaml`, `.nexus.yaml`, `.gitignore`
 
 ---
 
 ## 8. Open Items
 
-- ADR-024: `engx init` — user project onboarding command (generates `.nexus.yaml`)
-- `start.sh` — single boot script for distribution
-- Atlas auth: engx `check` command requires `--token` flag until Atlas auth is normalised
-- `engx build` requires `--path` flag until Atlas is reliably reachable
+- ADR-032: `platform start --register` implementation in nexus (code not yet written)
+- ADR-033: `engx deregister <project>` — remove ghost projects from DB
+- Homebrew tap — ADR next after deregister
+- `binary-versions` doctor check: version string not injected until goreleaser pipeline used for local builds
+- `db-integrity` doctor check: engxd needs CGO-enabled build (goreleaser now handles this for releases)
+
+---
+
+## 9. Startup Sequence (current correct procedure)
+
+```bash
+# 1. Start daemon
+engxd &
+sleep 2
+
+# 2. First boot only — register all services
+for svc in atlas forge guardian metrics navigator observer sentinel; do
+  engx register ~/workspace/projects/engx/services/$svc
+done
+
+# 3. Set desired=running and start
+for svc in atlas forge guardian metrics navigator observer sentinel; do
+  engx project start $svc
+done
+
+# 4. Start agent
+/tmp/bin/engxa --id local --server http://127.0.0.1:8080 \
+  --token local-agent-token --addr 127.0.0.1:9090 &
+
+# 5. Verify
+engx doctor
+```
+
+After ADR-032 ships, step 2+3 collapse to: `engx platform start --register`
