@@ -146,7 +146,7 @@ sleep 2 && engxd & sleep 3 && ~/bin/atlas & sleep 4 && ~/bin/forge &
 
 ```bash
 # ADRs live in developer-platform repo — not in service repos
-cd ~/workspace/developer-platform
+cd ~/workspace/projects/engx/governance
 # Create: architecture/decisions/ADR-NNN-title.md
 # Format: Date, Status, Context, Decision, Implications, Alternatives, Consequences
 # Commit before writing any implementation code (architecture-evolution-rules.md Rule 1)

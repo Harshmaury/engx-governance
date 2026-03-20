@@ -333,7 +333,7 @@ zp all                # package entire platform
 ## Governance
 
 ```
-~/workspace/developer-platform/
+~/workspace/projects/engx/governance/
 ├── architecture/decisions/
 │   ├── ADR-001  Project registry authority (Nexus)
 │   ├── ADR-002  Workspace observation ownership (Nexus)
@@ -471,7 +471,7 @@ Symptom → file to check → relevant ADR.
 | ZIP lands in wrong dir | `echo $ZP_DROP_DIR` — set to `/mnt/c/Users/harsh/Downloads/engx-drop` | ADR-019 |
 | `_backups/` in ZIP | Upgrade to zp v2.0.0 | ADR-019 |
 | `go.mod` missing from ZIP | Upgrade to zp v2.0.0 (always included now) | ADR-019 |
-| developer-platform not packageable | `zp --path ~/workspace/developer-platform` | ADR-019 |
+| developer-platform not packageable | `zp --path ~/workspace/projects/engx/governance` | ADR-019 |
 
 ### Database
 | Symptom | Fix |
