@@ -458,3 +458,14 @@ Completed:
 
 Anyone can now sponsor the project directly from GitHub.
 This is the first revenue channel — active before any Pro feature is built.
+
+---
+
+## Release Log
+
+| Version | Date | Notes |
+|---------|------|-------|
+| v1.7.0 | 2026-03-21 | Wave 5+6+UX — engx run/ps/deregister, system/graph, system/validate |
+| v1.7.1 | 2026-03-21 | Stability fixes — duplicate routes, cliVersion, AI_CONTEXT sync |
+| v1.7.2 | 2026-03-21 | Release pipeline fix — checksums.txt now contains all 5 SHAs |
+| v1.7.3 | 2026-03-21 | First fully tested release — all go test ./... pass across 9 services |
