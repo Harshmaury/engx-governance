@@ -4,13 +4,13 @@ Context document for AI systems working within this developer platform.
 Read this file at the start of any session involving platform architecture,
 new service design, code changes, or cross-project integration work.
 
-**Updated:** 2026-03-20 | **Tag:** v0.6.0-wave4
+**Updated:** 2026-03-21 | **Tag:** v1.7.0
 
 ---
 
 ## 1. What This Platform Is
 
-A local developer control plane. Three capability layers, ten services, one CLI.
+A local developer control plane. Three capability layers, thirteen services, one CLI.
 
 ```
 Control    Nexus   :8080   coordinates everything — sole registry, sole writer
@@ -27,27 +27,27 @@ This repository governs the platform. It contains no implementation code.
 
 ---
 
-## 2. Current Platform State (2026-03-20)
+## 2. Current Platform State (2026-03-21)
 
 | Service   | Version          | Phase    | Key State                              |
 |-----------|------------------|----------|----------------------------------------|
-| Nexus     | v1.6.6           | 1–20     | Wave 4: goreleaser, install script, upgrade cmd |
-| Atlas     | v0.5.0-phase3    | 1–3      | nexus.yaml contract, verified graph    |
-| Forge     | v0.5.0-phase5    | 1–5      | scheduled cron triggers, preflight snapshot |
-| Metrics   | v0.2.0-phase2    | 1–2      | Prometheus, Canon headers              |
+| Nexus     | v1.7.0           | 1–22     | Wave 5+6+UX: system/graph, system/validate, engx run/ps/deregister |
+| Atlas     | v0.5.0-phase3    | 1–4      | nexus.yaml contract, verified graph, logger-threaded handlers |
+| Forge     | v0.5.0-phase5    | 1–5      | CronScheduler dedup fixed + wired, preflight snapshot |
+| Metrics   | v0.2.0-phase2    | 1–2      | Prometheus /metrics/prometheus endpoint |
 | Navigator | v0.1.0-phase1    | 1        | Canon headers, trace propagation       |
-| Guardian  | v0.1.0-phase1    | 1        | Canon headers, 5 policy rules          |
-| Observer  | v0.1.0-phase1    | 1        | Canon v0.3.0, trace assembler          |
-| Sentinel  | v0.3.0-phase3    | 1–3      | recovery log persist, AI on-demand     |
-| Canon     | v0.3.0           | —        | identity constants, default addrs      |
-| ZP        | v2.0.0           | —        | packaging tool, workspace registry scan |
+| Guardian  | v0.2.0-phase2    | 1–2      | Per-cycle trace ID, WARNING logs on failure |
+| Observer  | v0.2.0-phase2    | 1–2      | Trace ring buffer 200 entries          |
+| Sentinel  | v0.3.0-phase3    | 1–3      | engine_test S-001–S-008, actuator policy_test |
+| Canon     | v0.3.0           | —        | identity constants, default addrs, descriptor package |
+| ZP        | v2.0.0           | —        | packaging tool, LoadFromID dead code removed |
 | Accord    | v0.1.0           | —        | shared API types, error codes, Response[T] |
 | Herald    | v0.1.0           | —        | typed Nexus HTTP client, retry/backoff |
 
 **All repos on `main` branch.**
-**Tags:** v0.1.0-platform-working → v0.2.0-adr023-startup-grace → v0.3.0-cross-service-commands → v0.6.0-wave4
+**Tags:** v0.1.0-platform-working → v0.2.0-adr023-startup-grace → v0.3.0-cross-service-commands → v0.6.0-wave4 → v1.7.0
 
-**Compiled binaries:** `~/bin/` — engxd, engx, engxa (Wave 4: installed via goreleaser pipeline)
+**Compiled binaries:** `~/bin/` — engxd, engx, engxa (installed via goreleaser pipeline)
 **Service binaries:** `/tmp/bin/` — atlas, forge, metrics, navigator, guardian, observer, sentinel
 
 ---
@@ -125,7 +125,7 @@ Canon is in `go.mod` for all 8 service repos. Never hardcode header strings.
 | ADR-021 | PreflightSnapshot in Execution History | ✅ Accepted |
 | ADR-022 | Service Registration API | ✅ Accepted |
 | ADR-023 | Platform Startup Grace (Reset) | ✅ Accepted |
-| ADR-024 | engx init — Project Onboarding | ✅ Accepted |
+| ADR-024 | Sentinel Actuator Write Authority | ✅ Accepted |
 | ADR-025 | engx init — nexus.yaml Generation | ✅ Accepted |
 | ADR-026 | engxd System Service Install | ✅ Accepted |
 | ADR-027 | Forge Scheduled Cron Triggers | ✅ Accepted |
@@ -134,6 +134,14 @@ Canon is in `go.mod` for all 8 service repos. Never hardcode header strings.
 | ADR-030 | goreleaser Release Pipeline | ✅ Accepted |
 | ADR-031 | scripts/install.sh Zero-to-Running | ✅ Accepted |
 | ADR-032 | platform start Must Persist desired=running | ✅ Accepted |
+| ADR-033 | Accord — Shared API Types Module | ✅ Accepted |
+| ADR-034 | Herald — Typed Nexus HTTP Client | ✅ Accepted |
+| ADR-035 | engx deregister — Remove Ghost Projects | ✅ Accepted + Shipped (v1.7.0) |
+| ADR-036 | GET /system/graph — Unified Topology Endpoint | ✅ Accepted + Shipped (v1.7.0) |
+| ADR-037 | Signal System — Event Schema Enhancement | ✅ Accepted — **not yet implemented** |
+| ADR-038 | POST /system/validate — Pre-Execution Policy Gate | ✅ Accepted + Shipped (v1.7.0) |
+| ADR-039 | Herald Migration — Replace Internal Nexus Collectors | ✅ Accepted — **not yet implemented** |
+| ADR-040 | Outcome-Centric UX: Progressive Disclosure | ✅ Accepted + Shipped (v1.7.0) |
 
 ---
 
@@ -143,7 +151,7 @@ Canon is in `go.mod` for all 8 service repos. Never hardcode header strings.
 engx-governance/
   standards/documentation.md            documentation system
   definitions/glossary.md               canonical term definitions
-  architecture/decisions/               ADR-001 through ADR-032
+  architecture/decisions/               ADR-001 through ADR-040
   architecture/platform-capability-boundaries.md
   architecture/architecture-evolution-rules.md
 ```
@@ -154,15 +162,34 @@ Service repos: each contains `SERVICE-CONTRACT.md`, `nexus.yaml`, `.nexus.yaml`,
 
 ## 8. Open Items
 
-- ADR-032: `platform start --register` implementation in nexus (code not yet written)
-- ADR-033: `engx deregister <project>` — remove ghost projects from DB
-- Homebrew tap — ADR next after deregister
+- **ADR-037**: DB migration v6 (level/span_id/parent_span_id columns) + Canon level constants — not implemented
+- **ADR-039**: Herald migration — replace `internal/collector/nexus.go` in Guardian, Observer, Metrics, Navigator, Sentinel — not started
+- **ADR-032**: `engx platform start --register` flag — implementation pending (startup sequence still uses manual loop)
 - `binary-versions` doctor check: version string not injected until goreleaser pipeline used for local builds
-- `db-integrity` doctor check: engxd needs CGO-enabled build (goreleaser now handles this for releases)
+- Node.js 20 deprecation in GitHub Actions — forced to Node.js 24 from June 2 2026; set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` in workflow files to resolve now
 
 ---
 
-## 9. Startup Sequence (current correct procedure)
+## 9. Release Discipline (adopted 2026-03-21)
+
+**`main` is stabilised first. Tags are cut only when the stability gate passes.**
+
+Stability gate (must all pass before any tag):
+```
+□ go build ./... passes — all services
+□ go test ./...  passes — all services
+□ engx doctor clean on a fresh start
+□ engx run <each service> succeeds
+□ No known P0/P1 bugs open
+□ AI_CONTEXT.md reflects actual state
+□ RUNBOOK.md reflects actual commands
+```
+
+Fix commits carry no version bump. One tag when the gate passes.
+
+---
+
+## 10. Startup Sequence (current correct procedure)
 
 ```bash
 # 1. Start daemon
@@ -187,4 +214,4 @@ done
 engx doctor
 ```
 
-After ADR-032 ships, step 2+3 collapse to: `engx platform start --register`
+After ADR-032 `--register` ships, steps 2+3 collapse to: `engx platform start --register`
