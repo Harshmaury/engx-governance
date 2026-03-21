@@ -165,9 +165,10 @@ Never use raw `http.NewRequestWithContext` in observer collectors — always Her
 | ADR-038 | POST /system/validate — Pre-Execution Policy Gate | ✅ Accepted + Shipped (v1.7.0) |
 | ADR-039 | Herald Migration — Replace Internal Collectors | ✅ Accepted + **Shipped (2026-03-21)** |
 | ADR-040 | Outcome-Centric UX: Progressive Disclosure | ✅ Accepted + Shipped (v1.7.0) |
-| ADR-041 | Relay — engxa expose + tunnel architecture | ⏳ Next — draft before any v3 code |
-| ADR-042 | Gate — auth + tenancy model | ⏳ After ADR-041 |
-| ADR-043 | Conduit — remote execution system | ⏳ After ADR-042 |
+| ADR-041 | Relay — engxa expose + tunnel architecture | ⏳ Future — ADR required before any code |
+| ADR-042 | Gate — Platform Identity Authority (Ed25519 JWT) | ✅ Accepted + Shipped (Gate v1.0.0) |
+| ADR-043 | Plan — Command Execution Model | ✅ Accepted + Shipped (Nexus v1.8.0) |
+| ADR-046 | Conduit — remote execution routing | ⏳ Future — after ADR-041 |
 
 ---
 
@@ -177,7 +178,7 @@ Never use raw `http.NewRequestWithContext` in observer collectors — always Her
 engx-governance/
   standards/documentation.md            documentation system
   definitions/glossary.md               canonical term definitions
-  architecture/decisions/               ADR-001 through ADR-040
+  architecture/decisions/               ADR-001 through ADR-043
   architecture/v3-strategy.md           authoritative v3 spec (Relay → Gate → Conduit)
   architecture/platform-capability-boundaries.md
   architecture/architecture-evolution-rules.md
@@ -247,23 +248,25 @@ engx doctor
 
 ---
 
-## 11. v3 Architecture (authoritative — read v3-strategy.md before any v3 work)
+## 11. v3 Architecture (future — not started. Read v3-strategy.md before any v3 work)
 
 v3 is an additive expansion layer over v2. Nothing in v2 is replaced.
+**No v3 code exists. No v3 ADRs are drafted. v3 begins only after this section is activated.**
 
 ```
-Phase 1 — Relay    engxa expose → public HTTPS endpoint (*.engx.dev)
-Phase 2 — Gate     GitHub OAuth, team membership, token issuance
-Phase 3 — Conduit  engxa run --on <machine> remote execution routing
+Gate      — identity authority          ✅ ALREADY BUILT (v1.0.0, ADR-042)
+Phase 1 — Relay    engxa expose → public HTTPS endpoint (*.engx.dev)   ⏳ future
+Phase 2 — Conduit  engxa run --on <machine> remote execution routing    ⏳ future
 ```
 
-**Three new services only. No new capability domains. No existing service modified.**
+**Gate is already built as a v2 platform primitive (ADR-042, Gate v1.0.0).**
+Relay and Conduit are not started. Two new services remaining. No existing service modified.
 
-Inter-service rules for v3 (absolute):
+Inter-service rules for v3 (absolute — apply when v3 work begins):
 - All v3 → v2 calls use Herald. No raw HTTP.
 - All cross-boundary types use Accord. No local anonymous structs.
 - All header strings from Canon. No literals.
-- Gate is the only identity authority. Relay and Conduit validate via Gate.
+- Gate is the only identity authority. Relay and Conduit validate via Gate (already operational).
 - Conduit routes through Forge, never calls Nexus start/stop directly.
 - ADR-first: ADR-041 must be committed before any Relay code is written.
 
@@ -316,6 +319,6 @@ No ADR is written until validation is complete.
 |---|------|-------|--------|
 | 1 | Tunnel resilience — Relay reconnection model | Phase 1 | Not started |
 | 2 | Herald timeout policy — review existing 10s/3-retry baseline | All | Not started |
-| 3 | Token validation + expiry model | Phase 2 (Gate) | Not started |
+| 3 | Token validation + expiry model | Gate (v2) | ✅ Shipped — Ed25519 JWT, ADR-042 |
 | 4 | Correlation ID propagation across v3 boundary | All | Not started |
 | 5 | Graceful shutdown under active tunnel connections | Phase 1 | Not started |

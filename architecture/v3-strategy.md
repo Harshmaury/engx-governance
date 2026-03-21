@@ -4,7 +4,7 @@
 **Version:** 1.0  
 **Date:** 2026-03-21  
 **Author:** Harsh Maury  
-**Status:** Adopted — planning phase  
+**Status:** Planning — Relay and Conduit not started. Gate is shipped (v1.0.0, ADR-042).  
 **Prerequisites:** v2.0.0 stable and tagged ✅  
 **Audience:** All AI systems and contributors working on engx v3
 
@@ -37,12 +37,12 @@ engx team join          → shared registry across a team   (Phase 2)
 engx run api --on alice → Forge executes on alice machine  (Phase 3)
 ```
 
-Three new services deliver these capabilities:
+Two new services remain to be built. Gate is already operational:
 
 ```
-Relay     — TLS tunnel multiplexer + subdomain routing    (Phase 1)
-Gate      — GitHub OAuth + team identity + token issuance  (Phase 2)
-Conduit   — remote command routing + event stream relay    (Phase 3)
+Gate      — identity authority, Ed25519 JWT tokens        ✅ SHIPPED (v1.0.0, ADR-042)
+Relay     — TLS tunnel multiplexer + subdomain routing    ⏳ Phase 1 (not started)
+Conduit   — remote command routing + event stream relay    ⏳ Phase 2 (not started, after Relay)
 ```
 
 Nothing in v2 is replaced. Everything in v3 is additive.
@@ -875,7 +875,7 @@ feat(phase1): command dispatch + SSE streaming (ADR-049)
 All of the following require committed ADRs before any code is written.
 Numbers are provisional — next available is ADR-041.
 
-### Phase 1 — Relay
+### Phase 1 — Relay (not started)
 
 | ADR | Title | Must precede |
 |-----|-------|-------------|
@@ -884,7 +884,7 @@ Numbers are provisional — next available is ADR-041.
 | ADR-043 | engxa tunnel mode — new connection type | engxa changes |
 | ADR-044 | `*.engx.dev` subdomain system | DNS + SSL setup |
 
-### Phase 2 — Gate
+### Gate (shipped)
 
 | ADR | Title | Must precede |
 |-----|-------|-------------|
@@ -893,7 +893,7 @@ Numbers are provisional — next available is ADR-041.
 | ADR-047 | Local↔Team sync protocol | engxd team flag |
 | ADR-048 | Team-scoped subdomain prefixes | Phase 2 expose extension |
 
-### Phase 3 — Conduit
+### Phase 2 — Conduit (not started, after Relay)
 
 | ADR | Title | Must precede |
 |-----|-------|-------------|

@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Date:** 2026-03-21  
 **Author:** Harsh Maury  
-**Status:** Planning — no v3 code until v2.0.0 is stable and tagged  
+**Status:** Planning — Relay and Conduit not started. Gate shipped v1.0.0 (ADR-042). No Relay/Conduit code until ADR-041 is committed.  
 **Builds on:** STRATEGY.md §6, platform-capability-boundaries.md, architecture-evolution-rules.md
 
 ---
